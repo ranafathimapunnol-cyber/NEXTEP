@@ -2,25 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function proxy(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
-
   const pathname = request.nextUrl.pathname;
 
-  const isProtectedRoute =
-    pathname.startsWith("/dashboard");
-
-  const isAuthRoute =
-    pathname === "/login" ||
-    pathname === "/register";
-
-  // Not logged in → dashboard is blocked
-  if (isProtectedRoute && !token) {
+  // Protected dashboard routes
+  if (pathname.startsWith("/dashboard") && !token) {
     return NextResponse.redirect(
       new URL("/login", request.url)
     );
   }
 
-  // Already logged in → don't allow login/register again
-  if (isAuthRoute && token) {
+  // Logged-in users should not access auth pages
+  if (
+    token &&
+    (pathname === "/login" ||
+      pathname === "/register")
+  ) {
     return NextResponse.redirect(
       new URL("/dashboard", request.url)
     );
