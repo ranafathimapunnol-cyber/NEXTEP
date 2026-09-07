@@ -284,28 +284,13 @@ export default function LoginPage() {
 
                 <div className="h-px flex-1 bg-gray-200" />
 
-                <span className="text-xs font-medium text-gray-400">
-                  OR
-                </span>
+             
 
                 <div className="h-px flex-1 bg-gray-200" />
 
               </div>
 
 
-              {/* GOOGLE */}
-
-              <button
-                type="button"
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-              >
-                <span className="text-base font-bold">
-                  G
-                </span>
-
-                Continue with Google
-
-              </button>
 
 
               {/* REGISTER */}
