@@ -22,3 +22,6 @@ next-env.d.ts
 
 # Vercel
 .vercel
+
+#swap files
+*.swp 
