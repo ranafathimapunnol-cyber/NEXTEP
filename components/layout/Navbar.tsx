@@ -1,4 +1,7 @@
 import Link from "next/link";
+import GetStarted from "@/components/ui/GetStarted";
+
+
 
 export default function Navbar() {
   return (
@@ -41,12 +44,18 @@ export default function Navbar() {
             Log in
           </Link>
 
-          <Link
+          {/* <Link
             href="/login"
             className="rounded-lg bg-gray-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-gray-800"
           >
             Get started
-          </Link>
+          </Link> */}
+
+          <GetStarted
+          />
+
+
+
         </div>
       </div>
     </header>

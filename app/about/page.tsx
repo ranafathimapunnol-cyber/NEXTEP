@@ -26,7 +26,7 @@ export default function AboutPage() {
     <main className="min-h-screen bg-[#fafafa] text-gray-900">
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-gray-200">
-        <div className="absolute left-1/2 top-[-200px] -z-10 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-gray-200/60 blur-3xl" />
+        <div className="absolute left-1/2 top-50 -z-10 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-gray-200/60 blur-3xl" />
 
         <div className="mx-auto max-w-7xl px-6 py-20 sm:py-28">
           <div className="max-w-3xl">
