@@ -1,5 +1,6 @@
 # Python
 backend/.venv/
+.venv/
 **/__pycache__/
 *.py[cod]
 *.sqlite3
@@ -8,6 +9,7 @@ backend/.venv/
 node_modules/
 .next/
 out/
+*.tsbuildinfo
 
 # Environment files
 .env
@@ -16,7 +18,6 @@ out/
 
 # Git
 .git/
-.gitignore
 
 # OS files
 .DS_Store

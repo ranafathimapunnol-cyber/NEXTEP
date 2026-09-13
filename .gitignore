@@ -1,27 +1,33 @@
 # Dependencies
-/node_modules
+node_modules/
+backend/.venv/
+.venv/
+
+# Python cache and database
+**/__pycache__/
+*.py[cod]
+*.sqlite3
 
 # Next.js
-/.next/
-/out/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
 
 # Environment variables
 .env*
 !.env.example
 
+# Vercel
+.vercel/
+
 # macOS
 .DS_Store
 
-# Debug logs
+# Debug and log files
+*.log
 npm-debug.log*
 .pnpm-debug.log*
 
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
-
-# Vercel
-.vercel
-
-#swap files
-*.swp 
+# Editor swap files
+*.swp
