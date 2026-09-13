@@ -1,3 +1,4 @@
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
@@ -21,3 +22,26 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=validated_data["email"],
             password=validated_data["password"],
         )
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "bio",
+            "profile_picture",
+        ]
+        read_only_fields = ["id"]
+
+    def update(self, instance, validated_data):
+        for attribute, value in validated_data.items():
+            setattr(instance, attribute, value)
+
+        instance.save()
+
+        return instance

@@ -1,0 +1,25 @@
+# Python
+backend/.venv/
+**/__pycache__/
+*.py[cod]
+*.sqlite3
+
+# Next.js
+node_modules/
+.next/
+out/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Git
+.git/
+.gitignore
+
+# OS files
+.DS_Store
+
+# Logs
+*.log

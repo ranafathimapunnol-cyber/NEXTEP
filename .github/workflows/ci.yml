@@ -3,12 +3,14 @@ name: Nextep CI
 on:
   push:
     branches:
+      - main
       - development
       - production
       - rana
 
   pull_request:
     branches:
+      - main
       - development
       - production
       - rana
