@@ -1,5 +1,5 @@
 name: Nextep CI
-
+#Workflow triggers — on
 on:
   push:
     branches:
@@ -14,7 +14,7 @@ on:
       - development
       - production
       - rana
-
+#seperate unit of work inside a workflow
 jobs:
   backend-check:
     name: Backend Checks
@@ -43,7 +43,7 @@ jobs:
 
   frontend-check:
     name: Frontend Checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest 
 
     steps:
       - name: Checkout repository
