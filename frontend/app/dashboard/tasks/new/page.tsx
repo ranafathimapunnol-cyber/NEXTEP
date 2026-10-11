@@ -2,25 +2,26 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, type FormEvent } from "react";
 
 import { apiRequest } from "@/lib/api";
 
 type Priority = "LOW" | "MEDIUM" | "HIGH";
 type TaskStatus = "TODO" | "IN_PROGRESS" | "COMPLETED";
 
-type Task = {
+type Category = {
   id: number;
+  name: string;
+};
+
+type TaskForm = {
   title: string;
   description: string;
   priority: Priority;
   status: TaskStatus;
-  due_date: string | null;
-  category: number | null;
-  category_name: string | null;
-  created_at: string;
-  updated_at: string;
+  due_date: string;
+  category: string;
 };
 
 const priorityStyles: Record<Priority, string> = {
@@ -35,191 +36,147 @@ const statusStyles: Record<TaskStatus, string> = {
   COMPLETED: "border-emerald-200 bg-emerald-50 text-emerald-800",
 };
 
-const statusLabels: Record<TaskStatus, string> = {
-  TODO: "To do",
-  IN_PROGRESS: "In progress",
-  COMPLETED: "Completed",
+const inputClass =
+  "mt-2 w-full rounded-xl border border-[#e7e5d9] bg-white px-4 py-3 text-sm text-[#292c25] outline-none transition placeholder:text-[#a2a397] focus:border-[#899873] focus:ring-2 focus:ring-[#e7e9dc] disabled:cursor-not-allowed disabled:bg-[#f5f4ed]";
+
+const labelClass =
+  "text-sm font-semibold text-[#414638]";
+
+const initialForm: TaskForm = {
+  title: "",
+  description: "",
+  priority: "MEDIUM",
+  status: "TODO",
+  due_date: "",
+  category: "",
 };
 
-const priorityLabels: Record<Priority, string> = {
-  LOW: "Low",
-  MEDIUM: "Medium",
-  HIGH: "High",
-};
-
-function formatDate(date: string) {
-  const parsedDate = new Date(date);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return date;
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
   }
 
-  return parsedDate.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return "Something went wrong. Please try again.";
 }
 
-export default function TaskDetailPage() {
-  const params = useParams<{ id: string }>();
+export default function CreateTaskPage() {
   const router = useRouter();
 
-  const taskId = params.id;
-
-  const [task, setTask] = useState<Task | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState(false);
-  const [updating, setUpdating] = useState(false);
+  const [form, setForm] = useState<TaskForm>(initialForm);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoryError, setCategoryError] = useState("");
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
 
-    async function loadTask() {
-      setLoading(true);
-      setError("");
-
+    async function loadCategories() {
       try {
-        const data = await apiRequest<Task>(`/tasks/${taskId}/`);
+        // Assumes GET /categories/ returns either an array
+        // or a Django REST Framework paginated response.
+        const response = await apiRequest<
+          Category[] | { results: Category[] }
+        >("/categories/");
+
+        const items = Array.isArray(response)
+          ? response
+          : response.results;
 
         if (active) {
-          setTask(data);
+          setCategories(items);
         }
-      } catch (err) {
+      } catch {
         if (active) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Unable to load this task."
+          setCategoryError(
+            "Categories could not be loaded. You can still create a task without one."
           );
         }
       } finally {
         if (active) {
-          setLoading(false);
+          setCategoriesLoading(false);
         }
       }
     }
 
-    if (taskId) {
-      void loadTask();
-    } else {
-      setLoading(false);
-      setError("Invalid task ID.");
-    }
+    void loadCategories();
 
     return () => {
       active = false;
     };
-  }, [taskId]);
+  }, []);
 
-  async function handleComplete() {
-    if (!task || updating) return;
+  function handleChange(
+    field: keyof TaskForm,
+    value: string
+  ) {
+    setForm((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
 
-    setUpdating(true);
-    setError("");
-
-    try {
-      const updatedTask = await apiRequest<Task>(
-        `/tasks/${task.id}/`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({
-            status: "COMPLETED",
-          }),
-        }
-      );
-
-      setTask(updatedTask);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to update this task."
-      );
-    } finally {
-      setUpdating(false);
+    if (error) {
+      setError("");
     }
   }
 
-  async function handleDelete() {
-    if (!task || deleting) return;
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
-    const confirmed = window.confirm(
-      `Delete "${task.title}"? This action cannot be undone.`
-    );
+    if (saving) return;
 
-    if (!confirmed) return;
-
-    setDeleting(true);
     setError("");
 
+    const title = form.title.trim();
+
+    if (!title) {
+      setError("Please enter a task title.");
+      return;
+    }
+
+    if (form.category && !categories.some(
+      (category) => category.id === Number(form.category)
+    )) {
+      setError(
+        "Please select a valid category or choose No category."
+      );
+      return;
+    }
+
+    setSaving(true);
+
     try {
-      await apiRequest(`/tasks/${task.id}/`, {
-        method: "DELETE",
+      const payload = {
+        title,
+        description: form.description.trim(),
+        priority: form.priority,
+        status: form.status,
+        due_date: form.due_date || null,
+        category: form.category
+          ? Number(form.category)
+          : null,
+      };
+
+      await apiRequest("/tasks/", {
+        method: "POST",
+        body: JSON.stringify(payload),
       });
 
       router.push("/dashboard/tasks");
       router.refresh();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to delete this task."
-      );
-      setDeleting(false);
+      setError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
     }
-  }
-
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-[#f8f7f2] px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl">
-          <div className="animate-pulse rounded-2xl border border-[#e7e5d9] bg-[#fdfcf8] p-8">
-            <div className="h-4 w-32 rounded bg-[#eeede5]" />
-            <div className="mt-8 h-8 w-2/3 rounded-lg bg-[#eeede5]" />
-            <div className="mt-4 h-4 w-full max-w-lg rounded bg-[#eeede5]" />
-            <div className="mt-3 h-4 w-3/4 rounded bg-[#eeede5]" />
-            <div className="mt-10 h-24 rounded-xl bg-[#f0efe8]" />
-          </div>
-          <p className="mt-4 text-center text-sm text-[#85877b]">
-            Loading your task...
-          </p>
-        </div>
-      </main>
-    );
-  }
-
-  if (!task) {
-    return (
-      <main className="min-h-screen bg-[#f8f7f2] px-4 py-12 text-[#292c25] sm:px-6">
-        <div className="mx-auto max-w-xl rounded-2xl border border-[#e7e5d9] bg-[#fdfcf8] px-6 py-12 text-center shadow-sm">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f0efe8] text-2xl text-[#58664a]">
-            !
-          </span>
-
-          <h1 className="mt-5 text-2xl font-semibold tracking-tight">
-            Task not found
-          </h1>
-
-          <p className="mt-3 text-sm leading-6 text-[#77796e]">
-            {error || "This task does not exist or is no longer available."}
-          </p>
-
-          <Link
-            href="/dashboard/tasks"
-            className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-[#343b2d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4b5740]"
-          >
-            ← Back to tasks
-          </Link>
-        </div>
-      </main>
-    );
   }
 
   return (
     <main className="min-h-screen bg-[#f8f7f2] text-[#292c25]">
-      {/* Header */}
+      {/* Page header */}
       <header className="border-b border-[#e7e5d9] bg-[#fdfcf8]">
         <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 lg:px-8">
           <nav
@@ -244,8 +201,8 @@ export default function TaskDetailPage() {
 
             <span aria-hidden="true">/</span>
 
-            <span className="max-w-48 truncate text-[#58664a]">
-              {task.title}
+            <span className="text-[#58664a]">
+              Create task
             </span>
           </nav>
 
@@ -253,21 +210,21 @@ export default function TaskDetailPage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e7e9dc] text-xl text-[#58664a]">
-                  ✓
+                  +
                 </span>
 
                 <span className="text-sm font-semibold text-[#58664a]">
-                  Task overview
+                  Task management
                 </span>
               </div>
 
-              <h1 className="mt-4 text-3xl font-semibold tracking-tight text-[#292c25] sm:text-4xl">
-                Task details
+              <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+                Create a new task
               </h1>
 
               <p className="mt-3 max-w-xl text-sm leading-6 text-[#77796e]">
-                Review your task, track its progress, and take the next step
-                toward getting it done.
+                Turn your next goal into an actionable task.
+                Add the details, choose a priority, and get started.
               </p>
             </div>
 
@@ -283,270 +240,386 @@ export default function TaskDetailPage() {
 
       {/* Main content */}
       <section className="mx-auto max-w-5xl px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
-        {error && (
-          <div
-            role="alert"
-            className="mb-6 rounded-xl border border-[#e8c9c0] bg-[#fbefeb] px-4 py-3 text-sm text-[#a34f3d]"
-          >
-            <p className="font-semibold">Something went wrong</p>
-            <p className="mt-1">{error}</p>
-          </div>
-        )}
-
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_270px]">
-          {/* Task information */}
-          <article className="overflow-hidden rounded-2xl border border-[#e7e5d9] bg-[#fdfcf8] shadow-sm shadow-[#343b2d]/[0.03]">
-            <div className="px-5 py-6 sm:px-7 sm:py-8">
-              {/* Status and priority */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${statusStyles[task.status]}`}
-                >
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full ${
-                      task.status === "COMPLETED"
-                        ? "bg-emerald-600"
-                        : task.status === "IN_PROGRESS"
-                          ? "bg-[#58664a]"
-                          : "bg-stone-400"
-                    }`}
-                  />
-                  {statusLabels[task.status]}
-                </span>
-
-                <span
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${priorityStyles[task.priority]}`}
-                >
-                  {priorityLabels[task.priority]} priority
-                </span>
-
-                {task.category_name && (
-                  <span className="rounded-full border border-[#e7e5d9] bg-[#f5f4ed] px-3 py-1.5 text-xs font-semibold text-[#68705e]">
-                    {task.category_name}
-                  </span>
-                )}
-              </div>
-
-              {/* Title and description */}
-              <h2
-                className={`mt-7 break-words text-2xl font-semibold tracking-tight sm:text-3xl ${
-                  task.status === "COMPLETED"
-                    ? "text-[#85877b] line-through"
-                    : "text-[#292c25]"
-                }`}
-              >
-                {task.title}
-              </h2>
-
-              <p className="mt-2 text-xs text-[#999b8f]">
-                Task #{task.id}
-              </p>
-
-              <div className="mt-6">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-[#85877b]">
-                  Description
-                </h3>
-
-                {task.description?.trim() ? (
-                  <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 text-[#62665a]">
-                    {task.description}
-                  </p>
-                ) : (
-                  <p className="mt-3 text-sm italic text-[#999b8f]">
-                    No description has been added to this task.
-                  </p>
-                )}
-              </div>
-
-              {/* Task metadata */}
-              <div className="mt-8 border-t border-[#eeede5] pt-7">
-                <h3 className="text-sm font-semibold text-[#343b2d]">
-                  Task information
-                </h3>
-
-                <div className="mt-5 grid gap-5 sm:grid-cols-2">
-                  <div className="rounded-xl border border-[#eeede5] bg-[#faf9f4] p-4">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#e7e9dc] text-lg text-[#58664a]">
-                      ◷
-                    </span>
-
-                    <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-[#85877b]">
-                      Due date
-                    </p>
-
-                    <p className="mt-2 break-words text-sm font-semibold text-[#414638]">
-                      {task.due_date
-                        ? formatDate(task.due_date)
-                        : "No due date"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-[#eeede5] bg-[#faf9f4] p-4">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#e7e9dc] text-lg text-[#58664a]">
-                      +
-                    </span>
-
-                    <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-[#85877b]">
-                      Created on
-                    </p>
-
-                    <p className="mt-2 break-words text-sm font-semibold text-[#414638]">
-                      {formatDate(task.created_at)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-5 flex flex-col gap-2 text-xs text-[#85877b] sm:flex-row sm:items-center sm:justify-between">
-                  <span>
-                    Last updated: {formatDate(task.updated_at)}
-                  </span>
-
-                  <span>Task ID: #{task.id}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col gap-3 border-t border-[#eeede5] bg-[#faf9f4] px-5 py-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:px-7">
-              <Link
-                href={`/dashboard/tasks/${task.id}/edit`}
-                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e7e5d9] bg-white px-5 py-3 text-sm font-semibold text-[#58664a] transition hover:border-[#cdd4bd] hover:bg-[#f8f7f2]"
-              >
-                Edit task
-              </Link>
-
-              {task.status !== "COMPLETED" && (
-                <button
-                  type="button"
-                  onClick={handleComplete}
-                  disabled={updating || deleting}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#343b2d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4b5740] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {updating ? (
-                    <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                      Updating...
-                    </>
-                  ) : (
-                    <>✓ Mark as completed</>
-                  )}
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleting || updating}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#e8c9c0] bg-white px-5 py-3 text-sm font-semibold text-[#a34f3d] transition hover:bg-[#fbefeb] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {deleting ? "Deleting..." : "Delete task"}
-              </button>
-            </div>
-          </article>
-
-          {/* Sidebar */}
-          <aside className="space-y-5">
-            {/* Progress card */}
-            <div className="rounded-2xl border border-[#e7e5d9] bg-[#fdfcf8] p-5">
-              <h2 className="text-sm font-semibold text-[#343b2d]">
-                Task progress
+          {/* Form */}
+          <form
+            onSubmit={handleSubmit}
+            className="overflow-hidden rounded-2xl border border-[#e7e5d9] bg-[#fdfcf8] shadow-sm shadow-[#343b2d]/[0.03]"
+          >
+            <div className="border-b border-[#eeede5] px-5 py-6 sm:px-7">
+              <h2 className="text-lg font-semibold text-[#343b2d]">
+                Task information
               </h2>
 
               <p className="mt-1 text-sm text-[#85877b]">
-                Keep moving forward, one step at a time.
+                Fields marked with * are required.
+              </p>
+            </div>
+
+            <div className="space-y-6 px-5 py-6 sm:px-7 sm:py-7">
+              {error && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-[#e8c9c0] bg-[#fbefeb] px-4 py-3 text-sm text-[#a34f3d]"
+                >
+                  <p className="font-semibold">
+                    Unable to create task
+                  </p>
+
+                  <p className="mt-1 break-words">
+                    {error}
+                  </p>
+                </div>
+              )}
+
+              {/* Title */}
+              <div>
+                <label
+                  htmlFor="title"
+                  className={labelClass}
+                >
+                  Task title *
+                </label>
+
+                <input
+                  id="title"
+                  name="title"
+                  type="text"
+                  required
+                  autoFocus
+                  maxLength={255}
+                  value={form.title}
+                  onChange={(event) =>
+                    handleChange("title", event.target.value)
+                  }
+                  placeholder="e.g. Complete project documentation"
+                  className={inputClass}
+                />
+
+                <div className="mt-2 flex justify-between gap-3">
+                  <p className="text-xs text-[#999b8f]">
+                    Keep your title short and descriptive.
+                  </p>
+
+                  <span
+                    className={`shrink-0 text-xs ${
+                      form.title.length >= 240
+                        ? "text-rose-600"
+                        : "text-[#999b8f]"
+                    }`}
+                  >
+                    {form.title.length}/255
+                  </span>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label
+                  htmlFor="description"
+                  className={labelClass}
+                >
+                  Description
+                </label>
+
+                <textarea
+                  id="description"
+                  name="description"
+                  rows={5}
+                  maxLength={5000}
+                  value={form.description}
+                  onChange={(event) =>
+                    handleChange(
+                      "description",
+                      event.target.value
+                    )
+                  }
+                  placeholder="Describe the work, important details, or expected outcome..."
+                  className={`${inputClass} resize-y`}
+                />
+
+                <p className="mt-2 text-xs text-[#999b8f]">
+                  {form.description.length}/5000 characters
+                </p>
+              </div>
+
+              {/* Priority */}
+              <fieldset>
+                <legend className={labelClass}>
+                  Priority
+                </legend>
+
+                <p className="mt-1 text-xs text-[#85877b]">
+                  How important is this task?
+                </p>
+
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {(
+                    ["LOW", "MEDIUM", "HIGH"] as Priority[]
+                  ).map((priority) => (
+                    <label
+                      key={priority}
+                      className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border px-2 py-3 text-sm font-semibold transition ${
+                        form.priority === priority
+                          ? `${priorityStyles[priority]} ring-2 ring-[#899873]/30`
+                          : "border-[#e7e5d9] bg-white text-[#77796e] hover:bg-[#faf9f4]"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="priority"
+                        value={priority}
+                        checked={form.priority === priority}
+                        onChange={() =>
+                          handleChange("priority", priority)
+                        }
+                        className="accent-[#58664a]"
+                      />
+
+                      {priority === "LOW"
+                        ? "Low"
+                        : priority === "MEDIUM"
+                          ? "Medium"
+                          : "High"}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              {/* Status and category */}
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="status"
+                    className={labelClass}
+                  >
+                    Initial status
+                  </label>
+
+                  <select
+                    id="status"
+                    name="status"
+                    value={form.status}
+                    onChange={(event) =>
+                      handleChange("status", event.target.value)
+                    }
+                    className={inputClass}
+                  >
+                    <option value="TODO">To do</option>
+                    <option value="IN_PROGRESS">
+                      In progress
+                    </option>
+                    <option value="COMPLETED">
+                      Completed
+                    </option>
+                  </select>
+
+                  <span
+                    className={`mt-2 inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusStyles[form.status]}`}
+                  >
+                    {form.status === "TODO"
+                      ? "To do"
+                      : form.status === "IN_PROGRESS"
+                        ? "In progress"
+                        : "Completed"}
+                  </span>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="category"
+                    className={labelClass}
+                  >
+                    Category
+                  </label>
+
+                  <select
+                    id="category"
+                    name="category"
+                    value={form.category}
+                    onChange={(event) =>
+                      handleChange("category", event.target.value)
+                    }
+                    disabled={categoriesLoading}
+                    className={inputClass}
+                  >
+                    <option value="">
+                      {categoriesLoading
+                        ? "Loading categories..."
+                        : "No category"}
+                    </option>
+
+                    {categories.map((category) => (
+                      <option
+                        key={category.id}
+                        value={String(category.id)}
+                      >
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {categoryError && (
+                    <p
+                      role="status"
+                      className="mt-2 text-xs leading-5 text-[#a34f3d]"
+                    >
+                      {categoryError}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Due date */}
+              <div>
+                <label
+                  htmlFor="due_date"
+                  className={labelClass}
+                >
+                  Due date
+                </label>
+
+                <input
+                  id="due_date"
+                  name="due_date"
+                  type="date"
+                  value={form.due_date}
+                  onChange={(event) =>
+                    handleChange("due_date", event.target.value)
+                  }
+                  className={inputClass}
+                />
+
+                <p className="mt-2 text-xs text-[#999b8f]">
+                  Leave empty if this task has no deadline.
+                </p>
+              </div>
+            </div>
+
+            {/* Form actions */}
+            <div className="flex flex-col-reverse gap-3 border-t border-[#eeede5] bg-[#faf9f4] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+              <p className="text-xs leading-5 text-[#85877b]">
+                You can update these details later.
               </p>
 
-              <div className="mt-5 flex items-center justify-between gap-3">
-                <span className="text-sm text-[#77796e]">Current status</span>
-
-                <span
-                  className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${statusStyles[task.status]}`}
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/dashboard/tasks"
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e7e5d9] bg-white px-5 py-3 text-sm font-semibold text-[#58664a] transition hover:bg-[#f5f4ed]"
                 >
-                  {statusLabels[task.status]}
+                  Cancel
+                </Link>
+
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#343b2d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4b5740] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {saving ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                      Creating task...
+                    </>
+                  ) : (
+                    <>+ Create task</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </form>
+
+          {/* Sidebar */}
+          <aside className="space-y-5">
+            {/* Live preview */}
+            <div className="rounded-2xl border border-[#e7e5d9] bg-[#fdfcf8] p-5">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-[#343b2d]">
+                  Live preview
+                </h2>
+
+                <span className="rounded-full bg-[#e7e9dc] px-2.5 py-1 text-xs font-semibold text-[#58664a]">
+                  Preview
                 </span>
               </div>
 
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#eeede5]">
-                <div
-                  className={`h-full rounded-full transition-all duration-300 ${
-                    task.status === "COMPLETED"
-                      ? "w-full bg-emerald-600"
-                      : task.status === "IN_PROGRESS"
-                        ? "w-1/2 bg-[#899873]"
-                        : "w-0 bg-[#899873]"
-                  }`}
-                />
-              </div>
-
-              <p className="mt-2 text-xs text-[#85877b]">
-                {task.status === "COMPLETED"
-                  ? "100% · Task completed"
-                  : task.status === "IN_PROGRESS"
-                    ? "50% · Work in progress"
-                    : "0% · Ready to get started"}
+              <p className="mt-1 text-sm text-[#85877b]">
+                See how your task is shaping up.
               </p>
-            </div>
 
-            {/* Task summary */}
-            <div className="rounded-2xl border border-[#e7e5d9] bg-[#fdfcf8] p-5">
-              <h2 className="text-sm font-semibold text-[#343b2d]">
-                Quick summary
-              </h2>
-
-              <div className="mt-4 space-y-4">
-                <div className="flex items-start justify-between gap-3">
-                  <span className="text-sm text-[#85877b]">Priority</span>
+              <div className="mt-5 rounded-xl border border-[#eeede5] bg-[#faf9f4] p-4">
+                <div className="flex flex-wrap gap-2">
+                  <span
+                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${statusStyles[form.status]}`}
+                  >
+                    {form.status === "TODO"
+                      ? "To do"
+                      : form.status === "IN_PROGRESS"
+                        ? "In progress"
+                        : "Completed"}
+                  </span>
 
                   <span
-                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${priorityStyles[task.priority]}`}
+                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${priorityStyles[form.priority]}`}
                   >
-                    {priorityLabels[task.priority]}
+                    {form.priority === "LOW"
+                      ? "Low"
+                      : form.priority === "MEDIUM"
+                        ? "Medium"
+                        : "High"}
                   </span>
                 </div>
 
-                <div className="flex items-start justify-between gap-3">
-                  <span className="text-sm text-[#85877b]">Category</span>
+                <h3 className="mt-4 break-words text-base font-semibold text-[#343b2d]">
+                  {form.title.trim() || "Your task title"}
+                </h3>
 
-                  <span className="max-w-36 break-words text-right text-sm font-medium text-[#414638]">
-                    {task.category_name || "Uncategorized"}
-                  </span>
-                </div>
+                <p className="mt-2 line-clamp-4 whitespace-pre-wrap break-words text-sm leading-6 text-[#77796e]">
+                  {form.description.trim() ||
+                    "Your task description will appear here."}
+                </p>
 
-                <div className="flex items-start justify-between gap-3">
-                  <span className="text-sm text-[#85877b]">Due date</span>
+                <div className="mt-4 border-t border-[#e7e5d9] pt-3 text-xs text-[#85877b]">
+                  <p>
+                    Category:{" "}
+                    {categories.find(
+                      (category) =>
+                        String(category.id) === form.category
+                    )?.name || "None"}
+                  </p>
 
-                  <span className="text-right text-sm font-medium text-[#414638]">
-                    {task.due_date ? formatDate(task.due_date) : "Not set"}
-                  </span>
+                  <p className="mt-2">
+                    Due date: {form.due_date || "Not set"}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Encouragement card */}
+            {/* Tips */}
             <div className="rounded-2xl border border-[#dfe3d4] bg-[#e7e9dc]/60 p-5">
               <span className="text-2xl" aria-hidden="true">
                 🌱
               </span>
 
               <h2 className="mt-3 text-sm font-semibold text-[#343b2d]">
-                Progress over perfection
+                Make it actionable
               </h2>
 
-              <p className="mt-2 text-sm leading-6 text-[#68735b]">
-                Every completed task is a step forward. Stay consistent, focus
-                on what matters, and celebrate your progress.
-              </p>
+              <ul className="mt-3 space-y-3 text-sm leading-6 text-[#68735b]">
+                <li className="flex gap-2">
+                  <span aria-hidden="true">✓</span>
+                  <span>Use a clear, specific task title.</span>
+                </li>
 
-              {task.status !== "COMPLETED" && (
-                <button
-                  type="button"
-                  onClick={handleComplete}
-                  disabled={updating || deleting}
-                  className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-[#343b2d] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#4b5740] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {updating ? "Updating..." : "Complete this task"}
-                </button>
-              )}
+                <li className="flex gap-2">
+                  <span aria-hidden="true">✓</span>
+                  <span>Break complicated work into smaller tasks.</span>
+                </li>
+
+                <li className="flex gap-2">
+                  <span aria-hidden="true">✓</span>
+                  <span>Choose a realistic priority and deadline.</span>
+                </li>
+              </ul>
             </div>
 
             <Link

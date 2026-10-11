@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: "⌂" },
@@ -14,24 +15,44 @@ const navigation = [
 export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   function handleLogout() {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user");
+    if (loggingOut) return;
 
-    document.cookie =
-      "access_token=; path=/; max-age=0; SameSite=Lax";
+    setLoggingOut(true);
 
-    router.replace("/login");
+    try {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user");
+
+      // Clear client-readable authentication cookies.
+      document.cookie =
+        "access_token=; path=/; max-age=0; SameSite=Lax";
+
+      document.cookie =
+        "refresh_token=; path=/; max-age=0; SameSite=Lax";
+
+      // Replace the current history entry with the login page.
+      router.replace("/login");
+      router.refresh();
+    } catch (error) {
+      console.error("Logout failed:", error);
+      setLoggingOut(false);
+    }
   }
 
   return (
     <aside className="hidden min-h-screen w-64 shrink-0 border-r border-[#e7e5d9] bg-[#fdfcf8] lg:block">
-      <div className="flex min-h-screen flex-col">
+      <div className="sticky top-0 flex h-screen flex-col overflow-y-auto">
         {/* Logo */}
-        <div className="flex h-20 items-center border-b border-[#eeede5] px-6">
-          <Link href="/" className="group flex items-center gap-3">
+        <div className="flex h-20 shrink-0 items-center border-b border-[#eeede5] px-6">
+          <Link
+            href="/"
+            aria-label="Nextep home"
+            className="group flex items-center gap-3"
+          >
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#343b2d] text-lg font-bold text-[#f8f7f2] shadow-sm transition group-hover:bg-[#4b5740]">
               N
             </div>
@@ -40,6 +61,7 @@ export default function Sidebar() {
               <span className="block text-lg font-bold tracking-tight text-[#292c25]">
                 Nextep
               </span>
+
               <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8c9b76]">
                 Work with purpose
               </span>
@@ -48,7 +70,10 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 px-4 py-7">
+        <nav
+          aria-label="Main navigation"
+          className="flex-1 space-y-1 px-4 py-7"
+        >
           <p className="mb-4 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#96988b]">
             Workspace
           </p>
@@ -76,7 +101,8 @@ export default function Sidebar() {
                 )}
 
                 <span
-                  className={`flex h-9 w-9 items-center justify-center rounded-xl text-base transition ${
+                  aria-hidden="true"
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base transition ${
                     isActive
                       ? "bg-[#343b2d] text-white"
                       : "bg-[#f1f0e8] text-[#77796e] group-hover:bg-[#e7e9dc] group-hover:text-[#343b2d]"
@@ -88,7 +114,10 @@ export default function Sidebar() {
                 <span>{item.name}</span>
 
                 {isActive && (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#71845d]" />
+                  <span
+                    aria-hidden="true"
+                    className="ml-auto h-1.5 w-1.5 rounded-full bg-[#71845d]"
+                  />
                 )}
               </Link>
             );
@@ -96,7 +125,7 @@ export default function Sidebar() {
         </nav>
 
         {/* Encouragement card and logout */}
-        <div className="border-t border-[#eeede5] p-4">
+        <div className="shrink-0 border-t border-[#eeede5] p-4">
           <div className="mb-4 overflow-hidden rounded-2xl border border-[#e5e7d9] bg-[#f0f1e7] p-4">
             <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-[#dfe4d3] text-lg text-[#4c5c3f]">
               ✳
@@ -110,20 +139,28 @@ export default function Sidebar() {
               Small steps every day lead to meaningful progress.
             </p>
 
-            <div className="mt-4 h-1 overflow-hidden rounded-full bg-[#dfe2d3]">
-              <div className="h-full w-2/3 rounded-full bg-[#8c9b76]" />
+            <div
+              className="mt-4 h-1 overflow-hidden rounded-full bg-[#dfe2d3]"
+              aria-hidden="true"
+            >
+              <div className="h-full w-full rounded-full bg-[#8c9b76]" />
             </div>
           </div>
 
           <button
             type="button"
             onClick={handleLogout}
-            className="group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[#77796e] transition hover:bg-[#f6e9e3] hover:text-[#a44d3f]"
+            disabled={loggingOut}
+            className="group flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-[#77796e] transition hover:bg-[#f6e9e3] hover:text-[#a44d3f] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f1f0e8] text-base transition group-hover:bg-[#f2ddd5]">
+            <span
+              aria-hidden="true"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f1f0e8] text-base transition group-hover:bg-[#f2ddd5]"
+            >
               ↪
             </span>
-            Logout
+
+            {loggingOut ? "Logging out..." : "Logout"}
           </button>
 
           <p className="mt-4 text-center text-[10px] tracking-wide text-[#a1a194]">
