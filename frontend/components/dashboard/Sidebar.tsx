@@ -13,9 +13,15 @@ const navigation = [
 ];
 
 export default function Sidebar() {
-  const router = useRouter();
   const pathname = usePathname();
+  const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+
+  function isActive(href: string) {
+    return href === "/dashboard"
+      ? pathname === href
+      : pathname === href || pathname.startsWith(`${href}/`);
+  }
 
   function handleLogout() {
     if (loggingOut) return;
@@ -27,14 +33,11 @@ export default function Sidebar() {
       localStorage.removeItem("refresh_token");
       localStorage.removeItem("user");
 
-      // Clear client-readable authentication cookies.
       document.cookie =
         "access_token=; path=/; max-age=0; SameSite=Lax";
-
       document.cookie =
         "refresh_token=; path=/; max-age=0; SameSite=Lax";
 
-      // Replace the current history entry with the login page.
       router.replace("/login");
       router.refresh();
     } catch (error) {
@@ -44,130 +47,139 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="hidden min-h-screen w-64 shrink-0 border-r border-[#e7e5d9] bg-[#fdfcf8] lg:block">
-      <div className="sticky top-0 flex h-screen flex-col overflow-y-auto">
-        {/* Logo */}
-        <div className="flex h-20 shrink-0 items-center border-b border-[#eeede5] px-6">
-          <Link
-            href="/"
-            aria-label="Nextep home"
-            className="group flex items-center gap-3"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#343b2d] text-lg font-bold text-[#f8f7f2] shadow-sm transition group-hover:bg-[#4b5740]">
-              N
-            </div>
+    <>
+      {/* Desktop sidebar — light beige and olive */}
+      <aside className="sticky top-0 hidden h-screen w-[250px] shrink-0 flex-col border-r border-[#e8e7dc] bg-[#fdfcf7] text-[#30382a] lg:flex">
+        {/* Brand */}
+        <Link
+          href="/dashboard"
+          aria-label="Nextep dashboard"
+          className="flex h-[82px] items-center gap-3 border-b border-[#eeede4] px-6"
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#e5e9d9] text-lg font-bold text-[#4b5b3c]">
+            N
+          </span>
 
-            <div>
-              <span className="block text-lg font-bold tracking-tight text-[#292c25]">
-                Nextep
-              </span>
-
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8c9b76]">
-                Work with purpose
-              </span>
-            </div>
-          </Link>
-        </div>
+          <span>
+            <span className="block text-lg font-bold tracking-tight text-[#30382a]">
+              Nextep
+            </span>
+            <span className="mt-0.5 block text-[10px] tracking-wide text-[#898d7d]">
+              Work with purpose
+            </span>
+          </span>
+        </Link>
 
         {/* Navigation */}
         <nav
           aria-label="Main navigation"
-          className="flex-1 space-y-1 px-4 py-7"
+          className="flex-1 px-4 py-8"
         >
-          <p className="mb-4 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#96988b]">
+          <p className="mb-4 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#969987]">
             Workspace
           </p>
 
-          {navigation.map((item) => {
-            const isActive =
-              item.href === "/dashboard"
-                ? pathname === "/dashboard"
-                : pathname === item.href ||
-                  pathname.startsWith(`${item.href}/`);
+          <div className="space-y-2">
+            {navigation.map((item) => {
+              const active = isActive(item.href);
 
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                aria-current={isActive ? "page" : undefined}
-                className={`group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? "bg-[#e7e9dc] text-[#343b2d] shadow-sm"
-                    : "text-[#77796e] hover:bg-[#f1f1e9] hover:text-[#343b2d]"
-                }`}
-              >
-                {isActive && (
-                  <span className="absolute bottom-2 left-0 top-2 w-1 rounded-r-full bg-[#71845d]" />
-                )}
-
-                <span
-                  aria-hidden="true"
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base transition ${
-                    isActive
-                      ? "bg-[#343b2d] text-white"
-                      : "bg-[#f1f0e8] text-[#77796e] group-hover:bg-[#e7e9dc] group-hover:text-[#343b2d]"
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`group flex min-h-[48px] items-center gap-3 rounded-xl border px-3.5 text-sm transition-all duration-200 ${
+                    active
+                      ? "border-[#dfe4d2] bg-[#e9ecdf] font-semibold text-[#39452e]"
+                      : "border-transparent text-[#737866] hover:border-[#eeede4] hover:bg-[#f4f3ec] hover:text-[#39452e]"
                   }`}
                 >
-                  {item.icon}
-                </span>
-
-                <span>{item.name}</span>
-
-                {isActive && (
                   <span
                     aria-hidden="true"
-                    className="ml-auto h-1.5 w-1.5 rounded-full bg-[#71845d]"
-                  />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg text-lg transition-colors ${
+                      active
+                        ? "bg-[#d7dfc8] text-[#435238]"
+                        : "bg-transparent text-[#858a77] group-hover:bg-[#e9ecdf] group-hover:text-[#435238]"
+                    }`}
+                  >
+                    {item.icon}
+                  </span>
 
-        {/* Encouragement card and logout */}
-        <div className="shrink-0 border-t border-[#eeede5] p-4">
-          <div className="mb-4 overflow-hidden rounded-2xl border border-[#e5e7d9] bg-[#f0f1e7] p-4">
-            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-[#dfe4d3] text-lg text-[#4c5c3f]">
-              ✳
-            </div>
+                  <span>{item.name}</span>
 
-            <p className="text-sm font-semibold text-[#343b2d]">
-              Stay consistent
-            </p>
-
-            <p className="mt-1 text-xs leading-5 text-[#77796e]">
-              Small steps every day lead to meaningful progress.
-            </p>
-
-            <div
-              className="mt-4 h-1 overflow-hidden rounded-full bg-[#dfe2d3]"
-              aria-hidden="true"
-            >
-              <div className="h-full w-full rounded-full bg-[#8c9b76]" />
-            </div>
+                  {active && (
+                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#71845d]" />
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
+          {/* Small workspace note */}
+          <div className="mt-10 rounded-2xl border border-[#e9e8dd] bg-[#f7f6ef] p-4">
+            <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-[#e5e9d9] text-[#586747]">
+              ✳
+            </div>
+            <p className="text-xs font-semibold text-[#46513b]">
+              One step at a time
+            </p>
+            <p className="mt-1 text-[11px] leading-5 text-[#898d7d]">
+              Small progress adds up to meaningful results.
+            </p>
+          </div>
+        </nav>
+
+        {/* Logout */}
+        <div className="border-t border-[#eeede4] p-4">
           <button
             type="button"
             onClick={handleLogout}
             disabled={loggingOut}
-            className="group flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-[#77796e] transition hover:bg-[#f6e9e3] hover:text-[#a44d3f] disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3.5 text-sm font-medium text-[#747968] transition-colors hover:bg-[#f2eee7] hover:text-[#6d5140] disabled:opacity-50"
           >
-            <span
-              aria-hidden="true"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f1f0e8] text-base transition group-hover:bg-[#f2ddd5]"
-            >
+            <span aria-hidden="true" className="text-lg">
               ↪
             </span>
-
-            {loggingOut ? "Logging out..." : "Logout"}
+            {loggingOut ? "Logging out…" : "Log out"}
           </button>
 
-          <p className="mt-4 text-center text-[10px] tracking-wide text-[#a1a194]">
-            Made for steady progress · Nextep
+          <p className="px-3 pb-1 pt-3 text-[10px] text-[#a0a18f]">
+            Made for steady progress
           </p>
         </div>
-      </div>
-    </aside>
+      </aside>
+
+      {/* Mobile bottom navigation — unchanged */}
+      <nav
+        aria-label="Mobile navigation"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-[#e5e5da] bg-[#fffefb]/95 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_rgba(48,58,41,0.07)] backdrop-blur-lg lg:hidden"
+      >
+        <div className="mx-auto grid max-w-lg grid-cols-4 gap-1">
+          {navigation.map((item) => {
+            const active = isActive(item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={`flex min-h-[54px] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 transition ${
+                  active
+                    ? "bg-[#e9ecdf] text-[#303a29]"
+                    : "text-[#858879] hover:bg-[#f1f1e9] hover:text-[#303a29]"
+                }`}
+              >
+                <span aria-hidden="true" className="text-lg leading-5">
+                  {item.icon}
+                </span>
+                <span className="text-[10px] font-semibold leading-4">
+                  {item.name}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </>
   );
 }

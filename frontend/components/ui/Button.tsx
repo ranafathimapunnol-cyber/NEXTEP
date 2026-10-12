@@ -23,7 +23,7 @@ export default function Button({
     primary:
       "bg-gray-900 text-white shadow-sm hover:bg-gray-800 hover:-translate-y-0.5",
     secondary:
-      "border border-gray-200 bg-white text-gray-900 hover:bg-gray-50 hover:border-gray-300",
+      "border border-gray-200 bg-white text-white hover:bg-gray-50 hover:border-gray-300",
     ghost:
       "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
   };

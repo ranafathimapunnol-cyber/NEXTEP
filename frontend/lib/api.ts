@@ -1,9 +1,6 @@
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-if (!API_URL) {
-  throw new Error("NEXT_PUBLIC_API_URL is not configured");
-}
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "/api"
+).replace(/\/+$/, "");
 
 function getAccessToken(): string | null {
   if (typeof window === "undefined") {

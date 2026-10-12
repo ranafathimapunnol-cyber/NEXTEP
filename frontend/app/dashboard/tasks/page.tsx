@@ -23,17 +23,17 @@ const statusConfig = {
   TODO: {
     label: "To do",
     dot: "bg-stone-400",
-    badge: "bg-stone-100 text-stone-600 border-stone-200",
+    badge: "border-stone-200 bg-stone-100 text-stone-700",
   },
   IN_PROGRESS: {
     label: "In progress",
     dot: "bg-amber-500",
-    badge: "bg-amber-50 text-amber-800 border-amber-200",
+    badge: "border-amber-200 bg-amber-50 text-amber-800",
   },
   COMPLETED: {
     label: "Completed",
     dot: "bg-emerald-600",
-    badge: "bg-emerald-50 text-emerald-800 border-emerald-200",
+    badge: "border-emerald-200 bg-emerald-50 text-emerald-800",
   },
 };
 
@@ -41,19 +41,25 @@ const priorityConfig = {
   HIGH: {
     label: "High",
     dot: "bg-rose-500",
-    badge: "bg-rose-50 text-rose-700 border-rose-200",
+    badge: "border-rose-200 bg-rose-50 text-rose-800",
   },
   MEDIUM: {
     label: "Medium",
     dot: "bg-amber-500",
-    badge: "bg-amber-50 text-amber-800 border-amber-200",
+    badge: "border-amber-200 bg-amber-50 text-amber-800",
   },
   LOW: {
     label: "Low",
-    dot: "bg-[#8c9b76]",
-    badge: "bg-[#e7e9dc] text-[#4d6040] border-[#d9decb]",
+    dot: "bg-[#84936b]",
+    badge: "border-[#d9decb] bg-[#e7e9dc] text-[#435238]",
   },
 };
+
+const primaryButton =
+  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#343b2d] bg-[#343b2d] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:border-[#4b5740] hover:bg-[#4b5740] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84936b] focus-visible:ring-offset-2 active:bg-[#293023] disabled:cursor-not-allowed disabled:opacity-60";
+
+const secondaryButton =
+  "inline-flex min-h-11 items-center justify-center rounded-xl border border-[#d9decb] bg-[#fdfcf8] px-4 py-2.5 text-sm font-semibold text-[#435238] transition-colors hover:border-[#aab69a] hover:bg-[#edf0e5] hover:text-[#343b2d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84936b] focus-visible:ring-offset-2";
 
 function formatDueDate(date: string | null) {
   if (!date) return null;
@@ -84,6 +90,7 @@ function getDueState(date: string | null, status: Task["status"]) {
   if (difference < 0) return "Overdue";
   if (difference === 0) return "Due today";
   if (difference === 1) return "Due tomorrow";
+
   return null;
 }
 
@@ -101,23 +108,25 @@ function SummaryCard({
   tone: string;
 }) {
   return (
-    <div className="group rounded-2xl border border-[#e7e5d9] bg-[#fdfcf8] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[#cdd4bd] hover:shadow-md hover:shadow-[#343b2d]/5">
+    <article className="group min-w-0 rounded-2xl border border-[#e7e5d9] bg-[#fdfcf8] p-4 shadow-sm shadow-[#343b2d]/[0.02] transition duration-200 hover:-translate-y-0.5 hover:border-[#cdd4bd] hover:shadow-md hover:shadow-[#343b2d]/5 sm:p-5">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-medium text-[#77796e]">{label}</p>
           <p className="mt-3 text-3xl font-semibold tracking-tight text-[#292c25]">
             {value}
           </p>
         </div>
+
         <span
-          className={`flex h-11 w-11 items-center justify-center rounded-xl text-lg ${tone}`}
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg sm:h-11 sm:w-11 ${tone}`}
           aria-hidden="true"
         >
           {symbol}
         </span>
       </div>
-      <p className="mt-4 text-xs text-[#85877b]">{detail}</p>
-    </div>
+
+      <p className="mt-3 text-xs leading-5 text-[#77796e]">{detail}</p>
+    </article>
   );
 }
 
@@ -130,41 +139,43 @@ function TaskRow({ task }: { task: Task }) {
   return (
     <Link
       href={`/dashboard/tasks/${task.id}`}
-      className="group block px-4 py-5 transition hover:bg-[#f8f8f2] sm:px-6"
+      className="group block px-4 py-5 transition-colors duration-200 hover:bg-[#f4f4eb] focus-visible:bg-[#f4f4eb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#84936b] sm:px-6"
     >
-      <div className="flex items-start gap-3 sm:gap-4">
+      <div className="flex min-w-0 items-start gap-3 sm:gap-4">
         <span
-          className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs ${
+          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs font-bold ${
             task.status === "COMPLETED"
-              ? "border-[#8c9b76] bg-[#8c9b76] text-white"
-              : "border-[#d7d9cb] bg-white text-transparent group-hover:border-[#8c9b76]"
+              ? "border-[#84936b] bg-[#84936b] text-white"
+              : "border-[#d7d9cb] bg-white text-transparent group-hover:border-[#84936b]"
           }`}
-          aria-label={task.status === "COMPLETED" ? "Completed" : "Not completed"}
+          aria-label={
+            task.status === "COMPLETED" ? "Completed" : "Not completed"
+          }
         >
           ✓
         </span>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2
-              className={`break-words text-sm font-semibold transition ${
+            <h3
+              className={`break-words text-sm font-semibold transition-colors ${
                 task.status === "COMPLETED"
-                  ? "text-[#999b8f] line-through"
+                  ? "text-[#898b80] line-through"
                   : "text-[#343b2d] group-hover:text-[#58664a]"
               }`}
             >
               {task.title}
-            </h2>
+            </h3>
 
             {dueState === "Overdue" && (
-              <span className="rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+              <span className="rounded-md border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-800">
                 Overdue
               </span>
             )}
           </div>
 
           {task.description && (
-            <p className="mt-1.5 line-clamp-2 max-w-2xl text-sm leading-6 text-[#85877b]">
+            <p className="mt-1.5 line-clamp-2 break-words text-sm leading-6 text-[#77796e]">
               {task.description}
             </p>
           )}
@@ -178,8 +189,8 @@ function TaskRow({ task }: { task: Task }) {
             </span>
 
             {task.category_name && (
-              <span className="inline-flex items-center rounded-full border border-[#e7e5d9] bg-white px-2.5 py-1 text-xs font-medium text-[#77796e]">
-                {task.category_name}
+              <span className="inline-flex max-w-full items-center rounded-full border border-[#e7e5d9] bg-white px-2.5 py-1 text-xs font-medium text-[#626458]">
+                <span className="truncate">{task.category_name}</span>
               </span>
             )}
 
@@ -187,25 +198,35 @@ function TaskRow({ task }: { task: Task }) {
               <span
                 className={`text-xs ${
                   dueState === "Overdue"
-                    ? "font-medium text-rose-700"
+                    ? "font-semibold text-rose-700"
                     : dueState === "Due today"
-                      ? "font-medium text-amber-800"
-                      : "text-[#85877b]"
+                      ? "font-semibold text-amber-800"
+                      : "text-[#77796e]"
                 }`}
               >
                 {dueState ? `${dueState} · ${dueDate}` : `Due ${dueDate}`}
               </span>
             )}
           </div>
+
+          <div className="mt-3 sm:hidden">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${priority.badge}`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${priority.dot}`} />
+              {priority.label} priority
+            </span>
+          </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 self-center">
+        <div className="hidden shrink-0 items-center gap-3 self-center sm:flex">
           <span
-            className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-semibold sm:inline-flex ${priority.badge}`}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-semibold ${priority.badge}`}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${priority.dot}`} />
             {priority.label}
           </span>
+
           <span
             aria-hidden="true"
             className="text-lg text-[#b9bcad] transition group-hover:translate-x-1 group-hover:text-[#58664a]"
@@ -213,15 +234,6 @@ function TaskRow({ task }: { task: Task }) {
             →
           </span>
         </div>
-      </div>
-
-      <div className="mt-3 pl-8 sm:hidden">
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${priority.badge}`}
-        >
-          <span className={`h-1.5 w-1.5 rounded-full ${priority.dot}`} />
-          {priority.label} priority
-        </span>
       </div>
     </Link>
   );
@@ -253,29 +265,8 @@ export default function TasksPage() {
   }, []);
 
   useEffect(() => {
-    let active = true;
-
-    async function fetchTasks() {
-      try {
-        const data = await apiRequest<Task[]>("/tasks/");
-        if (active) setTasks(data);
-      } catch (err) {
-        if (active) {
-          setError(
-            err instanceof Error ? err.message : "Unable to load your tasks."
-          );
-        }
-      } finally {
-        if (active) setLoading(false);
-      }
-    }
-
-    void fetchTasks();
-
-    return () => {
-      active = false;
-    };
-  }, []);
+    void loadTasks();
+  }, [loadTasks]);
 
   const filteredTasks = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -321,15 +312,15 @@ export default function TasksPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f8f7f2] text-[#292c25]">
+    <main className="min-h-screen min-w-0 overflow-x-clip bg-[#f8f7f2] text-[#292c25]">
       <section className="border-b border-[#e7e5d9] bg-[#fdfcf8]">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-          <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-            <div>
-              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[#85877b]">
+        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end sm:gap-6">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[#77796e]">
                 <Link
                   href="/dashboard"
-                  className="transition hover:text-[#343b2d]"
+                  className="rounded-sm transition-colors hover:text-[#343b2d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84936b]"
                 >
                   Workspace
                 </Link>
@@ -341,8 +332,9 @@ export default function TasksPage() {
                 <h1 className="text-3xl font-semibold tracking-tight text-[#292c25] sm:text-4xl">
                   Your tasks, in focus.
                 </h1>
+
                 {!loading && !error && (
-                  <span className="rounded-full border border-[#dfe3d4] bg-[#e7e9dc] px-3 py-1 text-xs font-semibold text-[#58664a]">
+                  <span className="rounded-full border border-[#d9decb] bg-[#e7e9dc] px-3 py-1 text-xs font-semibold text-[#435238]">
                     {summary.total} total
                   </span>
                 )}
@@ -354,67 +346,75 @@ export default function TasksPage() {
               </p>
             </div>
 
-            <Link
-              href="/dashboard/tasks/new"
-              className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-xl bg-[#343b2d] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#4b5740] hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8c9b76] sm:self-auto"
-            >
-              <span aria-hidden="true" className="text-lg leading-none">+</span>
-              Create a task
-            </Link>
+         
+<Link
+  href="/dashboard/tasks/new"
+  style={{
+    backgroundColor: "#343b2d",
+    color: "#ffffff",
+    borderColor: "#343b2d",
+  }}
+  className="inline-flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84936b] focus-visible:ring-offset-2 sm:w-auto"
+>
+  <span aria-hidden="true" className="text-lg leading-none">+</span>
+  Create a task
+</Link>
           </div>
 
           {!loading && !error && (
-            <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-7 grid grid-cols-2 gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
               <SummaryCard
                 label="All tasks"
                 value={summary.total}
                 detail="Everything on your list"
                 symbol="▤"
-                tone="bg-[#e7e9dc] text-[#58664a]"
+                tone="bg-[#e7e9dc] text-[#435238]"
               />
               <SummaryCard
                 label="To do"
                 value={summary.todo}
                 detail="Ready for your attention"
                 symbol="○"
-                tone="bg-stone-100 text-stone-600"
+                tone="bg-stone-100 text-stone-700"
               />
               <SummaryCard
                 label="In progress"
                 value={summary.inProgress}
                 detail="Work already underway"
                 symbol="◷"
-                tone="bg-amber-50 text-amber-700"
+                tone="bg-amber-50 text-amber-800"
               />
               <SummaryCard
                 label="Completed"
                 value={summary.completed}
                 detail={
                   summary.total > 0
-                    ? `${Math.round((summary.completed / summary.total) * 100)}% of all tasks`
+                    ? `${Math.round(
+                        (summary.completed / summary.total) * 100
+                      )}% of all tasks`
                     : "Your next win starts here"
                 }
                 symbol="✓"
-                tone="bg-emerald-50 text-emerald-700"
+                tone="bg-emerald-50 text-emerald-800"
               />
             </div>
           )}
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-9">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold tracking-tight text-[#343b2d]">
               Task list
             </h2>
-            <p className="mt-1 text-sm text-[#85877b]">
+            <p className="mt-1 text-sm leading-5 text-[#77796e]">
               Find a task or narrow the list to what needs your attention.
             </p>
           </div>
 
           {!loading && !error && summary.overdue > 0 && (
-            <div className="inline-flex items-center gap-2 self-start rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs font-medium text-rose-700">
+            <div className="inline-flex items-center gap-2 self-start rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs font-medium text-rose-800">
               <span className="h-2 w-2 rounded-full bg-rose-500" />
               {summary.overdue} overdue{" "}
               {summary.overdue === 1 ? "task" : "tasks"}
@@ -422,39 +422,42 @@ export default function TasksPage() {
           )}
         </div>
 
-        <div className="mb-5 rounded-2xl border border-[#e7e5d9] bg-[#fdfcf8] p-3 shadow-sm sm:p-4">
-          <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px_auto]">
-            <div className="relative">
+        <div className="mb-5 rounded-2xl border border-[#e7e5d9] bg-[#fdfcf8] p-3 shadow-sm shadow-[#343b2d]/[0.03] sm:p-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_180px_180px_auto]">
+            <div className="relative min-w-0">
               <label htmlFor="task-search" className="sr-only">
                 Search tasks
               </label>
+
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-base text-[#999b8f]"
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-base text-[#77796e]"
               >
                 ⌕
               </span>
+
               <input
                 id="task-search"
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search title, description, category..."
-                className="min-h-11 w-full rounded-xl border border-[#e7e5d9] bg-[#f8f7f2] py-3 pl-10 pr-3 text-sm text-[#292c25] outline-none transition placeholder:text-[#a0a194] focus:border-[#8c9b76] focus:bg-white focus:ring-2 focus:ring-[#e7e9dc]"
+                className="min-h-12 w-full min-w-0 rounded-xl border border-[#e1dfd3] bg-[#f8f7f2] py-3 pl-10 pr-3 text-sm text-[#292c25] outline-none transition placeholder:text-[#85877b] focus:border-[#84936b] focus:bg-white focus:ring-2 focus:ring-[#e7e9dc]"
               />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label htmlFor="task-status" className="sr-only">
                 Filter by status
               </label>
+
               <select
                 id="task-status"
                 value={statusFilter}
                 onChange={(event) =>
                   setStatusFilter(event.target.value as StatusFilter)
                 }
-                className="min-h-11 w-full rounded-xl border border-[#e7e5d9] bg-[#f8f7f2] px-3 text-sm text-[#555b4b] outline-none transition focus:border-[#8c9b76] focus:ring-2 focus:ring-[#e7e9dc]"
+                className="min-h-12 w-full rounded-xl border border-[#e1dfd3] bg-[#f8f7f2] px-3 text-sm text-[#435238] outline-none transition focus:border-[#84936b] focus:ring-2 focus:ring-[#e7e9dc]"
               >
                 <option value="ALL">All statuses</option>
                 <option value="TODO">To do</option>
@@ -463,17 +466,18 @@ export default function TasksPage() {
               </select>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label htmlFor="task-priority" className="sr-only">
                 Filter by priority
               </label>
+
               <select
                 id="task-priority"
                 value={priorityFilter}
                 onChange={(event) =>
                   setPriorityFilter(event.target.value as PriorityFilter)
                 }
-                className="min-h-11 w-full rounded-xl border border-[#e7e5d9] bg-[#f8f7f2] px-3 text-sm text-[#555b4b] outline-none transition focus:border-[#8c9b76] focus:ring-2 focus:ring-[#e7e9dc]"
+                className="min-h-12 w-full rounded-xl border border-[#e1dfd3] bg-[#f8f7f2] px-3 text-sm text-[#435238] outline-none transition focus:border-[#84936b] focus:ring-2 focus:ring-[#e7e9dc]"
               >
                 <option value="ALL">All priorities</option>
                 <option value="HIGH">High priority</option>
@@ -486,28 +490,25 @@ export default function TasksPage() {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="min-h-11 rounded-xl border border-[#e7e5d9] px-4 text-sm font-semibold text-[#58664a] transition hover:border-[#cdd4bd] hover:bg-[#e7e9dc]"
+                className={`${secondaryButton} w-full md:w-auto`}
               >
-                Reset
+                Reset filters
               </button>
             )}
           </div>
 
           {!loading && !error && (
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#eeede5] pt-3">
-              <p className="text-xs text-[#85877b]" aria-live="polite">
+            <div className="mt-3 flex flex-col gap-1.5 border-t border-[#eeede5] pt-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-[#77796e]" aria-live="polite">
                 Showing{" "}
                 <span className="font-semibold text-[#343b2d]">
                   {filteredTasks.length}
                 </span>{" "}
-                of {tasks.length}{" "}
-                {tasks.length === 1 ? "task" : "tasks"}
+                of {tasks.length} {tasks.length === 1 ? "task" : "tasks"}
               </p>
 
               {hasFilters && (
-                <p className="text-xs text-[#85877b]">
-                  Filters are active
-                </p>
+                <p className="text-xs text-[#77796e]">Filters are active</p>
               )}
             </div>
           )}
@@ -516,24 +517,27 @@ export default function TasksPage() {
         {error && (
           <div
             role="alert"
-            className="mb-5 rounded-2xl border border-[#e8c9c0] bg-[#fbefeb] p-5"
+            className="mb-5 rounded-2xl border border-[#e8c9c0] bg-[#fbefeb] p-4 sm:p-5"
           >
             <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70 text-lg text-[#a34f3d]">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-lg font-semibold text-[#a34f3d]">
                 !
               </span>
-              <div className="flex-1">
+
+              <div className="min-w-0 flex-1">
                 <h3 className="text-sm font-semibold text-[#873d30]">
                   We couldn&apos;t load your tasks
                 </h3>
-                <p className="mt-1 text-sm leading-6 text-[#a34f3d]">
+
+                <p className="mt-1 break-words text-sm leading-6 text-[#873d30]">
                   {error}
                 </p>
+
                 <button
                   type="button"
                   onClick={() => void loadTasks()}
                   disabled={loading}
-                  className="mt-3 rounded-lg bg-[#873d30] px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-[#6f3026] disabled:opacity-60"
+                  className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl border border-[#873d30] bg-[#873d30] px-4 py-2.5 text-sm font-semibold text-white transition hover:border-[#6f3026] hover:bg-[#6f3026] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#873d30] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loading ? "Trying again..." : "Try again"}
                 </button>
@@ -543,28 +547,29 @@ export default function TasksPage() {
         )}
 
         <div className="overflow-hidden rounded-2xl border border-[#e7e5d9] bg-[#fdfcf8] shadow-sm shadow-[#343b2d]/[0.03]">
-          <div className="flex items-center justify-between border-b border-[#eeede5] px-5 py-4 sm:px-6">
-            <div>
+          <div className="flex items-center justify-between gap-3 border-b border-[#eeede5] px-4 py-4 sm:px-6">
+            <div className="min-w-0">
               <h3 className="text-sm font-semibold text-[#343b2d]">
                 {statusFilter === "ALL"
                   ? "All your work"
                   : statusConfig[statusFilter].label}
               </h3>
-              <p className="mt-1 text-xs text-[#85877b]">
+              <p className="mt-1 text-xs text-[#77796e]">
                 Your tasks, all in one place
               </p>
             </div>
-            <span className="rounded-lg bg-[#f0efe8] px-2.5 py-1.5 text-xs font-semibold text-[#77796e]">
+
+            <span className="shrink-0 rounded-lg bg-[#f0efe8] px-2.5 py-1.5 text-xs font-semibold text-[#58664a]">
               {loading ? "…" : filteredTasks.length}
             </span>
           </div>
 
           {loading ? (
-            <div className="space-y-0 divide-y divide-[#eeede5]">
+            <div className="divide-y divide-[#eeede5]">
               {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="flex gap-4 px-5 py-6 sm:px-6">
+                <div key={index} className="flex gap-3 px-4 py-6 sm:gap-4 sm:px-6">
                   <div className="h-5 w-5 shrink-0 animate-pulse rounded-md bg-[#e7e9dc]" />
-                  <div className="flex-1 space-y-3">
+                  <div className="min-w-0 flex-1 space-y-3">
                     <div className="h-4 w-2/5 animate-pulse rounded-md bg-[#eeede5]" />
                     <div className="h-3 w-3/4 animate-pulse rounded-md bg-[#f0efe8]" />
                     <div className="h-5 w-32 animate-pulse rounded-full bg-[#eeede5]" />
@@ -573,12 +578,12 @@ export default function TasksPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="px-6 py-10 text-center text-sm text-[#85877b]">
+            <div className="px-5 py-10 text-center text-sm leading-6 text-[#77796e] sm:px-6">
               Your task list will appear here once loading succeeds.
             </div>
           ) : filteredTasks.length === 0 ? (
-            <div className="px-6 py-16 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-[#dfe3d4] bg-[#e7e9dc] text-2xl text-[#58664a]">
+            <div className="px-5 py-12 text-center sm:px-6 sm:py-16">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-[#d9decb] bg-[#e7e9dc] text-2xl text-[#435238]">
                 {tasks.length === 0 ? "✳" : "⌕"}
               </div>
 
@@ -597,7 +602,7 @@ export default function TasksPage() {
               {tasks.length === 0 ? (
                 <Link
                   href="/dashboard/tasks/new"
-                  className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#343b2d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4b5740]"
+                  className={`${primaryButton} mt-5 w-full sm:w-auto`}
                 >
                   <span aria-hidden="true">+</span>
                   Create your first task
@@ -606,7 +611,7 @@ export default function TasksPage() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="mt-5 rounded-xl border border-[#dfe3d4] px-4 py-2.5 text-sm font-semibold text-[#58664a] transition hover:bg-[#e7e9dc]"
+                  className={`${secondaryButton} mt-5 w-full sm:w-auto`}
                 >
                   Clear all filters
                 </button>
@@ -623,12 +628,13 @@ export default function TasksPage() {
 
         {!loading && !error && tasks.length > 0 && (
           <div className="mt-5 flex flex-col items-center justify-between gap-3 text-center sm:flex-row sm:text-left">
-            <p className="text-xs text-[#999b8f]">
+            <p className="text-xs leading-5 text-[#77796e]">
               Small steps, steady progress. 🌱
             </p>
+
             <Link
               href="/dashboard/tasks/new"
-              className="text-sm font-semibold text-[#58664a] transition hover:text-[#343b2d]"
+              className="rounded-sm text-sm font-semibold text-[#435238] transition-colors hover:text-[#292c25] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84936b]"
             >
               Have something new to do? Create a task →
             </Link>

@@ -4,13 +4,12 @@
 :root {
   --background: #f8f7f2;
   --foreground: #292c25;
-
   --olive: #343b2d;
-  --olive-hover: #4b5740;
+  --olive-hover: #454d3c;
   --sage: #8c9b76;
   --sage-light: #e7e9dc;
-
-  --surface: #fdfcf8;
+  --surface: #ffffff;
+  --surface-soft: #fdfcf8;
   --border: #e7e5d9;
   --muted: #77796e;
 }
@@ -18,16 +17,13 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-
   --color-olive: var(--olive);
   --color-olive-hover: var(--olive-hover);
   --color-sage: var(--sage);
   --color-sage-light: var(--sage-light);
-
   --color-surface: var(--surface);
   --color-border: var(--border);
   --color-muted: var(--muted);
-
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -78,4 +74,24 @@ select:focus-visible,
 textarea:focus-visible {
   outline: 2px solid var(--sage);
   outline-offset: 3px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
